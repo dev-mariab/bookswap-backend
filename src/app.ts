@@ -75,7 +75,7 @@ app.get('/api/test-table', async (req, res) => {
     
     res.json({
       success: true,
-      message: '✅ Tabela criada e teste realizado!',
+      message: 'Tabela criada e teste realizado!',
       data: results,
       total: Array.isArray(results) ? results.length : 0
     });
@@ -135,16 +135,16 @@ app.get('/api/livros', (req, res) => {
 
 app.listen(PORT, async () => {
   console.log('='.repeat(60));
-  console.log('📚 BOOKSWAP ACADEMY - PDS');
+  console.log('BOOKSWAP ACADEMY - PDS');
   console.log('='.repeat(60));
-  console.log(`📍 Servidor: http://localhost:${PORT}`);
-  console.log(`📊 API Base: http://localhost:${PORT}/api`);
-  console.log(`💾 Database: http://localhost:${PORT}/api/database`);
-  console.log(`📚 Livros: http://localhost:${PORT}/api/livros`);
+  console.log(`Servidor: http://localhost:${PORT}`);
+  console.log(`API Base: http://localhost:${PORT}/api`);
+  console.log(`Database: http://localhost:${PORT}/api/database`);
+  console.log(`Livros: http://localhost:${PORT}/api/livros`);
   console.log('='.repeat(60));
   
   await testConnection();
   
-  console.log('🚀 PRONTO PARA CONECTAR COM FRONTEND!');
+  console.log('PRONTO PARA CONECTAR COM FRONTEND!');
   console.log('='.repeat(60));
 });
