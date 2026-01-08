@@ -1,0 +1,7 @@
+{
+  "[sql]": {
+    "editor.defaultFormatter": "alexcvzz.vscode-sql-formatter"
+  },
+  "sql.linting.enabled": false,
+  "mssql.intelliSense.enableErrorChecking": false
+}
