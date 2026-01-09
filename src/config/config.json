@@ -1,0 +1,27 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "2003",
+    "database": "aplicacao_pds",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres",
+    "logging": false
+  },
+  "test": {
+    "username": "postgres",
+    "password": "2003",
+    "database": "aplicacao_pds_test",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "postgres",
+    "password": "2003",
+    "database": "aplicacao_pds_prod",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  }
+}
