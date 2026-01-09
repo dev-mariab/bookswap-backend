@@ -133,6 +133,37 @@ app.get('/api/livros', (req, res) => {
   }, 300);
 });
 
+app.post('/api/livros', async (req, res) => {
+  console.log('Recebida requisição POST para /api/livros');
+  console.log('Dados recebidos:', req.body);
+  
+  try {
+    
+    const novoLivro = {
+      id: Date.now().toString(), 
+      ...req.body,
+      criadoEm: new Date().toISOString(),
+      avaliacao: req.body.avaliacao || 4.5,
+      localizacao: req.body.localizacao || 'Campus Central'
+    };
+    
+    console.log('Livro criado:', novoLivro);
+    
+    res.status(201).json({
+      success: true,
+      message: 'Livro criado com sucesso!',
+      data: novoLivro
+    });
+    
+  } catch (error: any) {
+    console.error('Erro ao criar livro:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao criar livro'
+    });
+  }
+});
+
 app.listen(PORT, async () => {
   console.log('='.repeat(60));
   console.log('BOOKSWAP ACADEMY - PDS');
