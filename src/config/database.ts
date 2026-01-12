@@ -31,19 +31,19 @@ export const testConnection = async () => {
     try {
       await sequelize.authenticate();
       console.log('='.repeat(50));
-      console.log('CONEXÃO COM POSTGRESQL ESTABELECIDA!');
+      console.log('CONEXAO COM POSTGRESQL ESTABELECIDA');
       console.log(`Banco: ${process.env.DB_NAME}`);
-      console.log(`Usuário: ${process.env.DB_USER}`);
+      console.log(`Usuario: ${process.env.DB_USER}`);
       console.log(`Porta: 5432`);
       console.log('='.repeat(50));
       connectionTested = true;
       return true;
     } catch (error: any) {
-      console.error('ERRO DE CONEXÃO:', error.message);
+      console.error('ERRO DE CONEXAO:', error.message);
       console.log('Verifique:');
-      console.log('  1. PostgreSQL está rodando?');
-      console.log('  2. pgAdmin → Servidor "PostgreSQL 15" está online?');
-      console.log('  3. Senha "2003" está correta?');
+      console.log('  1. PostgreSQL esta rodando?');
+      console.log('  2. pgAdmin Servidor PostgreSQL 15 esta online?');
+      console.log('  3. Senha 2003 esta correta?');
       return false;
     }
   }

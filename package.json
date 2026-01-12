@@ -20,14 +20,18 @@
   "author": "Seu Nome",
   "license": "MIT",
   "dependencies": {
+    "@types/nodemailer": "^7.0.5",
+    "@types/web-push": "^3.6.4",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^7.0.12",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.7"
+    "sequelize": "^6.37.7",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@types/cors": "^2.8.13",
