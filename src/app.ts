@@ -1,9 +1,7 @@
-// bookswap-backend/src/app.ts
 import express from 'express';
 import cors from 'cors';
 import { testConnection } from './config/database';
 
-// Import dos padrões de projeto
 import { 
   PricingContext, 
   SalePricingStrategy, 
@@ -15,29 +13,20 @@ import { NotificationFactoryProducer } from './factories/NotificationFactory';
 import { BookRepository, CachedBookRepository } from './repositories/BookRepository';
 import { NotificationBuilder } from './factories/NotificationFactory';
 
-// Import do modelo (precisa ser criado)
-// import { Book } from './models/book';
-
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware de logging (novo)
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
 
-// Inicializar Repository com cache
 const bookRepository = new CachedBookRepository(new BookRepository());
 
-// ==================== ROTAS DA API ====================
-
-// Rota raiz
 app.get('/api', (req, res) => {
   res.json({
     projeto: 'BookSwap Academy',
@@ -66,7 +55,6 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Rota de saúde
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
@@ -76,7 +64,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Rota para verificar conexão com banco
 app.get('/api/database', async (req, res) => {
   try {
     const isConnected = await testConnection();
@@ -106,7 +93,6 @@ app.get('/api/database', async (req, res) => {
   }
 });
 
-// Rota para testar tabela
 app.get('/api/test-table', async (req, res) => {
   try {
     const sequelize = await import('./config/database');
@@ -141,7 +127,6 @@ app.get('/api/test-table', async (req, res) => {
   }
 });
 
-// Rota para listar padrões implementados
 app.get('/api/patterns', (req, res) => {
   res.json({
     patterns: [
@@ -179,12 +164,10 @@ app.get('/api/patterns', (req, res) => {
   });
 });
 
-// ==================== ROTAS DE LIVROS ====================
 
-// GET todos os livros (usando Repository Pattern)
 app.get('/api/livros', async (req, res) => {
   try {
-    console.log('📚 Buscando todos os livros via Repository Pattern');
+    console.log('Buscando todos os livros via Repository Pattern');
     
     const filters = {
       curso: req.query.curso as string || '',
@@ -195,7 +178,6 @@ app.get('/api/livros', async (req, res) => {
     
     let books;
     
-    // Aplicar filtros se existirem
     if (filters.curso) {
       books = await bookRepository.findByCourse(filters.curso);
     } else if (filters.condicao) {
@@ -204,7 +186,6 @@ app.get('/api/livros', async (req, res) => {
       books = await bookRepository.findAll();
     }
     
-    // Filtrar por preço manualmente (poderia ser no repository)
     if (filters.precoMin || filters.precoMax) {
       const min = filters.precoMin ? parseFloat(filters.precoMin) : 0;
       const max = filters.precoMax ? parseFloat(filters.precoMax) : Infinity;
@@ -224,7 +205,7 @@ app.get('/api/livros', async (req, res) => {
     });
     
   } catch (error: any) {
-    console.error('❌ Erro ao buscar livros:', error);
+    console.error('Erro ao buscar livros:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -232,11 +213,10 @@ app.get('/api/livros', async (req, res) => {
   }
 });
 
-// GET livro por ID
 app.get('/api/livros/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`🔍 Buscando livro ID: ${id}`);
+    console.log(`Buscando livro ID: ${id}`);
     
     const book = await bookRepository.findById(id);
     
@@ -253,7 +233,7 @@ app.get('/api/livros/:id', async (req, res) => {
     });
     
   } catch (error: any) {
-    console.error('❌ Erro ao buscar livro por ID:', error);
+    console.error('Erro ao buscar livro por ID:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -261,10 +241,9 @@ app.get('/api/livros/:id', async (req, res) => {
   }
 });
 
-// POST criar novo livro (usando Strategy + Factory Patterns)
 app.post('/api/livros', async (req, res) => {
   try {
-    console.log('📤 Recebendo requisição para criar livro');
+    console.log('Recebendo requisição para criar livro');
     console.log('Dados recebidos:', JSON.stringify(req.body, null, 2));
     
     const { 
@@ -275,10 +254,9 @@ app.post('/api/livros', async (req, res) => {
       descricao, 
       curso, 
       listingType = 'venda',
-      userId = 'user-123' // Temporário - depois pegar do auth
+      userId = 'user-123' 
     } = req.body;
     
-    // Validação básica
     if (!titulo || !autor) {
       return res.status(400).json({
         success: false,
@@ -286,34 +264,32 @@ app.post('/api/livros', async (req, res) => {
       });
     }
     
-    // ===== STRATEGY PATTERN: Cálculo de preço =====
     console.log('💰 Aplicando Strategy Pattern para cálculo de preço...');
     
     let pricingStrategy;
     switch(listingType.toLowerCase()) {
       case 'venda':
         pricingStrategy = new SalePricingStrategy();
-        console.log('🛒 Usando estratégia de VENDA');
+        console.log('Usando estratégia de VENDA');
         break;
       case 'troca':
         pricingStrategy = new TradePricingStrategy();
-        console.log('🔄 Usando estratégia de TROCA');
+        console.log('Usando estratégia de TROCA');
         break;
       case 'doacao':
         pricingStrategy = new DonationPricingStrategy();
-        console.log('🎁 Usando estratégia de DOAÇÃO');
+        console.log('Usando estratégia de DOAÇÃO');
         break;
       default:
         pricingStrategy = new SalePricingStrategy();
-        console.log('⚠️ Tipo desconhecido, usando VENDA como padrão');
+        console.log('Tipo desconhecido, usando VENDA como padrão');
     }
     
     const pricingContext = new PricingContext(pricingStrategy);
     const finalPrice = pricingContext.executeCalculation(preco || 0);
     
-    console.log(`💰 Preço base: R$ ${preco || 0}, Preço final: R$ ${finalPrice}`);
+    console.log(`Preço base: R$ ${preco || 0}, Preço final: R$ ${finalPrice}`);
     
-    // Preparar dados para salvar
     const bookData = {
       titulo,
       autor,
@@ -330,20 +306,17 @@ app.post('/api/livros', async (req, res) => {
       createdAt: new Date()
     };
     
-    // ===== REPOSITORY PATTERN: Salvar no banco =====
-    console.log('💾 Salvando livro via Repository Pattern...');
+    console.log('Salvando livro via Repository Pattern...');
     const newBook = await bookRepository.create(bookData);
-    console.log(`✅ Livro salvo com ID: ${newBook.id}`);
+    console.log(`Livro salvo com ID: ${newBook.id}`);
     
-    // ===== FACTORY METHOD PATTERN: Enviar notificações =====
-    console.log('🏭 Aplicando Factory Method Pattern para notificações...');
+    console.log('Aplicando Factory Method Pattern para notificações...');
     
     try {
-      // Método 1: Factory simples
       const notificationFactory = NotificationFactoryProducer.getFactory('inapp');
       await notificationFactory.notifyUser(
         userId,
-        `🎉 Seu livro "${titulo}" foi publicado com sucesso no BookSwap!`,
+        `Seu livro "${titulo}" foi publicado com sucesso no BookSwap!`,
         {
           bookId: newBook.id,
           listingType: listingType,
@@ -351,9 +324,8 @@ app.post('/api/livros', async (req, res) => {
           priority: 'high'
         }
       );
-      console.log('✅ Notificação in-app enviada');
+      console.log('Notificação in-app enviada');
       
-      // Método 2: Usando Builder Pattern (opcional)
       const notificationResults = await new NotificationBuilder()
         .setUserId(userId)
         .setMessage(`Seu livro "${titulo}" está disponível para ${listingType}`)
@@ -362,18 +334,16 @@ app.post('/api/livros', async (req, res) => {
           listingType: listingType,
           actionUrl: `http://localhost:3000/livros/${newBook.id}`
         })
-        .setTypes(['inapp']) // Poderia ser ['email', 'inapp'] com configuração real
+        .setTypes(['inapp']) 
         .setPriority('medium')
         .buildAndSend();
       
-      console.log('📨 Resultados das notificações:', notificationResults);
+      console.log('Resultados das notificações:', notificationResults);
       
     } catch (notificationError: any) {
-      console.warn('⚠️ Erro nas notificações (não crítico):', notificationError.message);
-      // Não falha a criação do livro por erro na notificação
+      console.warn('Erro nas notificações (não crítico):', notificationError.message);
     }
     
-    // ===== RESPONSE DE SUCESSO =====
     res.status(201).json({
       success: true,
       message: 'Livro criado com sucesso!',
@@ -388,7 +358,7 @@ app.post('/api/livros', async (req, res) => {
     });
     
   } catch (error: any) {
-    console.error('❌ Erro ao criar livro:', error);
+    console.error('Erro ao criar livro:', error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -397,11 +367,10 @@ app.post('/api/livros', async (req, res) => {
   }
 });
 
-// PUT atualizar livro
 app.put('/api/livros/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`✏️ Atualizando livro ID: ${id}`);
+    console.log(`Atualizando livro ID: ${id}`);
     
     const updatedBook = await bookRepository.update(id, req.body);
     
@@ -419,7 +388,7 @@ app.put('/api/livros/:id', async (req, res) => {
     });
     
   } catch (error: any) {
-    console.error('❌ Erro ao atualizar livro:', error);
+    console.error('Erro ao atualizar livro:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -427,11 +396,10 @@ app.put('/api/livros/:id', async (req, res) => {
   }
 });
 
-// DELETE livro
 app.delete('/api/livros/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`🗑️ Deletando livro ID: ${id}`);
+    console.log(`Deletando livro ID: ${id}`);
     
     const deleted = await bookRepository.delete(id);
     
@@ -449,7 +417,7 @@ app.delete('/api/livros/:id', async (req, res) => {
     });
     
   } catch (error: any) {
-    console.error('❌ Erro ao deletar livro:', error);
+    console.error('Erro ao deletar livro:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -457,39 +425,32 @@ app.delete('/api/livros/:id', async (req, res) => {
   }
 });
 
-// ==================== ROTA DE FILTROS AVANÇADOS ====================
-
 app.get('/api/livros/filters/advanced', async (req, res) => {
   try {
     console.log('🔍 Busca avançada com filtros:', req.query);
     
     const allBooks = await bookRepository.findAll();
     
-    // Aplicar múltiplos filtros
     let filteredBooks = [...allBooks];
     
-    // Filtro por curso
     if (req.query.curso) {
       filteredBooks = filteredBooks.filter(book => 
         book.curso?.toLowerCase().includes((req.query.curso as string).toLowerCase())
       );
     }
     
-    // Filtro por condição
     if (req.query.condicao) {
       filteredBooks = filteredBooks.filter(book => 
         book.condicao === req.query.condicao
       );
     }
     
-    // Filtro por tipo
     if (req.query.tipo) {
       filteredBooks = filteredBooks.filter(book => 
         book.tipo === req.query.tipo
       );
     }
     
-    // Filtro por preço
     if (req.query.precoMin || req.query.precoMax) {
       const min = req.query.precoMin ? parseFloat(req.query.precoMin as string) : 0;
       const max = req.query.precoMax ? parseFloat(req.query.precoMax as string) : Infinity;
@@ -500,7 +461,6 @@ app.get('/api/livros/filters/advanced', async (req, res) => {
       });
     }
     
-    // Filtro por vendedor
     if (req.query.vendedor) {
       filteredBooks = filteredBooks.filter(book => 
         book.vendedor?.toLowerCase().includes((req.query.vendedor as string).toLowerCase())
@@ -516,7 +476,7 @@ app.get('/api/livros/filters/advanced', async (req, res) => {
     });
     
   } catch (error: any) {
-    console.error('❌ Erro na busca avançada:', error);
+    console.error('Erro na busca avançada:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -524,11 +484,8 @@ app.get('/api/livros/filters/advanced', async (req, res) => {
   }
 });
 
-// ==================== ROTA DE TESTE DOS PADRÕES ====================
-
 app.get('/api/test/patterns', async (req, res) => {
   try {
-    // Teste do Strategy Pattern
     const strategies = {
       venda: new PricingContext(new SalePricingStrategy()),
       troca: new PricingContext(new TradePricingStrategy()),
@@ -541,14 +498,12 @@ app.get('/api/test/patterns', async (req, res) => {
       doacao: strategies.doacao.executeCalculation(50)
     };
     
-    // Teste do Factory Pattern
     const factories = {
       email: NotificationFactoryProducer.getFactory('email'),
       inapp: NotificationFactoryProducer.getFactory('inapp'),
       push: NotificationFactoryProducer.getFactory('push')
     };
     
-    // Teste do Repository Pattern
     const booksCount = (await bookRepository.findAll()).length;
     
     res.json({
@@ -580,7 +535,7 @@ app.get('/api/test/patterns', async (req, res) => {
           working: true
         }
       },
-      summary: '✅ Todos os 5 padrões de projeto estão implementados e funcionando!'
+      summary: 'Todos os 5 padrões de projeto estão implementados e funcionando!'
     });
     
   } catch (error: any) {
@@ -590,8 +545,6 @@ app.get('/api/test/patterns', async (req, res) => {
     });
   }
 });
-
-// ==================== MIDDLEWARE DE ERRO ====================
 
 app.use((req, res) => {
   res.status(404).json({
@@ -613,7 +566,7 @@ app.use((req, res) => {
 });
 
 app.use((error: any, req: any, res: any, next: any) => {
-  console.error('🔥 Erro não tratado:', error);
+  console.error('Erro não tratado:', error);
   res.status(500).json({
     success: false,
     error: 'Erro interno do servidor',
@@ -621,36 +574,28 @@ app.use((error: any, req: any, res: any, next: any) => {
   });
 });
 
-// ==================== INICIAR SERVIDOR ====================
-
 app.listen(PORT, async () => {
   console.log('='.repeat(70));
-  console.log('📚 BOOKSWAP ACADEMY - PADRÕES DE DESENVOLVIMENTO DE SOFTWARE');
+  console.log('BOOKSWAP ACADEMY - PADRÕES DE DESENVOLVIMENTO DE SOFTWARE');
   console.log('='.repeat(70));
-  console.log(`🚀 Servidor: http://localhost:${PORT}`);
-  console.log(`📖 API Base: http://localhost:${PORT}/api`);
-  console.log(`💾 Database: http://localhost:${PORT}/api/database`);
-  console.log(`🔍 Padrões: http://localhost:${PORT}/api/patterns`);
-  console.log(`📚 Livros: http://localhost:${PORT}/api/livros`);
-  console.log(`🧪 Teste: http://localhost:${PORT}/api/test/patterns`);
+  console.log(`Servidor: http://localhost:${PORT}`);
+  console.log(`API Base: http://localhost:${PORT}/api`);
+  console.log(`Database: http://localhost:${PORT}/api/database`);
+  console.log(`Padrões: http://localhost:${PORT}/api/patterns`);
+  console.log(`Livros: http://localhost:${PORT}/api/livros`);
+  console.log(`Teste: http://localhost:${PORT}/api/test/patterns`);
   console.log('='.repeat(70));
-  console.log('🎯 PADRÕES IMPLEMENTADOS:');
-  console.log('  1. Strategy Pattern - src/strategies/PricingStrategy.ts');
-  console.log('  2. Factory Method - src/factories/NotificationFactory.ts');
-  console.log('  3. Repository Pattern - src/repositories/BookRepository.ts');
-  console.log('  4. Observer Pattern - frontend/src/observers/BookObserver.ts');
-  console.log('  5. Composite Pattern - frontend/src/composites/UIComposite.tsx');
   console.log('='.repeat(70));
   
   try {
     await testConnection();
-    console.log('✅ Conectado ao PostgreSQL com sucesso!');
+    console.log('Conectado ao PostgreSQL com sucesso!');
   } catch (error) {
-    console.warn('⚠️ Não foi possível conectar ao banco de dados');
-    console.warn('⚠️ Algumas funcionalidades podem não funcionar corretamente');
+    console.warn('Não foi possível conectar ao banco de dados');
+    console.warn('Algumas funcionalidades podem não funcionar corretamente');
   }
   
-  console.log('🎉 PRONTO PARA CONECTAR COM FRONTEND!');
-  console.log('🎯 Teste os padrões em: http://localhost:3001/api/test/patterns');
+  console.log('PRONTO PARA CONECTAR COM FRONTEND!');
+  console.log('Teste os padrões em: http://localhost:3001/api/test/patterns');
   console.log('='.repeat(70));
 });
