@@ -8,4 +8,4 @@ Frontend: React com TypeScript e Tailwind CSS, Backend: Node.js, Express e Postg
 Objetivo: Facilitar o acesso a livros acadêmicos através de trocas, vendas e doações entre estudantes, criando uma comunidade universitária mais colaborativa.
 
 EQUIPE:  
-Maria josé Pinho Barros - 556324, 
+Maria josé Pinho Barros - 556324, Douglas Teófilo Cavalcante da Silva - 564625, Bruno
