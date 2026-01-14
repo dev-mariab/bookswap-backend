@@ -284,7 +284,6 @@ class NotificationFactoryProducer {
 exports.NotificationFactoryProducer = NotificationFactoryProducer;
 class CompositeNotificationFactory {
     constructor(factories) {
-        super();
         this.factories = factories;
     }
     async notifyUser(userId, message, metadata) {
@@ -304,6 +303,14 @@ class CompositeNotificationFactory {
         }
         return results;
     }
+    async notifyUsers(userIds, message, metadata) {
+        const allResults = [];
+        for (const userId of userIds) {
+            const userResults = await this.notifyUser(userId, message, metadata);
+            allResults.push(...userResults);
+        }
+        return allResults;
+    }
     addFactory(factory) {
         this.factories.push(factory);
     }
@@ -312,6 +319,18 @@ class CompositeNotificationFactory {
         if (index > -1) {
             this.factories.splice(index, 1);
         }
+    }
+    async notifyUserConsolidated(userId, message, metadata) {
+        const results = await this.notifyUser(userId, message, metadata);
+        const success = results.some(r => r.success);
+        const errors = results.filter(r => r.error).map(r => r.error);
+        const notificationIds = results.filter(r => r.notificationId).map(r => r.notificationId);
+        return {
+            success,
+            error: errors.length > 0 ? errors.join('; ') : undefined,
+            notificationId: notificationIds.length > 0 ? notificationIds.join(',') : undefined,
+            sentAt: new Date()
+        };
     }
 }
 exports.CompositeNotificationFactory = CompositeNotificationFactory;
@@ -344,13 +363,76 @@ class NotificationBuilder {
         this.metadata.priority = priority;
         return this;
     }
-    buildAndSend() {
+    async buildAndSend() {
         if (!this.userId || !this.message) {
             throw new Error('UserId e Message são obrigatórios');
         }
-        const factories = this.types.map(type => NotificationFactoryProducer.getFactory(type));
+        const factories = [];
+        for (const type of this.types) {
+            const factory = NotificationFactoryProducer.getFactory(type);
+            if (factory instanceof CompositeNotificationFactory) {
+                return await factory.notifyUser(this.userId, this.message, this.metadata);
+            }
+            else {
+                factories.push(factory);
+            }
+        }
+        if (factories.length === 1) {
+            return [await factories[0].notifyUser(this.userId, this.message, this.metadata)];
+        }
         const compositeFactory = new CompositeNotificationFactory(factories);
-        return compositeFactory.notifyUser(this.userId, this.message, this.metadata);
+        return await compositeFactory.notifyUser(this.userId, this.message, this.metadata);
+    }
+    async buildAndSendConsolidated() {
+        if (!this.userId || !this.message) {
+            throw new Error('UserId e Message são obrigatórios');
+        }
+        const factories = [];
+        for (const type of this.types) {
+            const factory = NotificationFactoryProducer.getFactory(type);
+            if (factory instanceof CompositeNotificationFactory) {
+                return await factory.notifyUserConsolidated(this.userId, this.message, this.metadata);
+            }
+            else {
+                factories.push(factory);
+            }
+        }
+        if (factories.length === 1) {
+            return await factories[0].notifyUser(this.userId, this.message, this.metadata);
+        }
+        const compositeFactory = new CompositeNotificationFactory(factories);
+        return await compositeFactory.notifyUserConsolidated(this.userId, this.message, this.metadata);
+    }
+    async buildAndSendAll() {
+        const originalTypes = [...this.types];
+        this.types = ['all'];
+        const result = await this.buildAndSend();
+        this.types = originalTypes;
+        return result;
+    }
+    async buildAndSendAllConsolidated() {
+        const originalTypes = [...this.types];
+        this.types = ['all'];
+        const result = await this.buildAndSendConsolidated();
+        this.types = originalTypes;
+        return result;
+    }
+    async sendForType(type) {
+        const originalTypes = [...this.types];
+        this.types = [type];
+        const results = await this.buildAndSend();
+        this.types = originalTypes;
+        return results[0] || {
+            success: false,
+            error: 'Nenhum resultado retornado',
+            sentAt: new Date()
+        };
+    }
+    async sendAll() {
+        return await this.buildAndSendAll();
+    }
+    async sendAllConsolidated() {
+        return await this.buildAndSendAllConsolidated();
     }
 }
 exports.NotificationBuilder = NotificationBuilder;

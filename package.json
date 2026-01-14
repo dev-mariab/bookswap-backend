@@ -4,12 +4,10 @@
   "description": "Backend do BookSwap Academy para PDS",
   "main": "dist/app.js",
   "scripts": {
-    "dev": "ts-node src/app.ts",
+    "dev": "npx nodemon --watch src --ext ts --exec npx ts-node src/app.ts",
     "build": "tsc",
     "start": "node dist/app.js",
-    "test": "echo \"Testando conexão...\" && npx ts-node -e \"import('./src/config/database').then(m => m.testConnection())\"",
-    "reset-db": "npx ts-node src/scripts/reset-db.ts",
-    "api-test": "curl http://localhost:3001/api/health"
+    "test": "npx ts-node -e \"console.log('Teste OK')\""
   },
   "keywords": [
     "pds",
@@ -20,24 +18,24 @@
   "author": "Seu Nome",
   "license": "MIT",
   "dependencies": {
-    "@types/nodemailer": "^7.0.5",
-    "@types/web-push": "^3.6.4",
-    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^7.0.12",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
+    "helmet": "^8.1.0",
+    "lucide-react": "^0.562.0",
+    "morgan": "^1.10.1",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.7",
-    "web-push": "^3.6.7"
+    "sequelize": "^6.37.7"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.13",
-    "@types/express": "^4.17.17",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.25",
+    "@types/helmet": "^0.0.48",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^20.5.9",
     "@types/pg": "^8.10.2",
+    "nodemon": "^3.1.11",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   }

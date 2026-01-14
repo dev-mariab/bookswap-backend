@@ -1,5 +1,5 @@
 import { Model } from 'sequelize';
-import { Usuario } from './Usuario';
+import { Usuario } from './User';
 declare class Book extends Model {
     id: string;
     title: string;

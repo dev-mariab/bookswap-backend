@@ -1,4 +1,4 @@
-import { Usuario } from './Usuario';
+import { Usuario } from './User';
 import { Book } from './Book';
 import { Anuncio } from './Anuncio';
 import { Notification } from './Notification';

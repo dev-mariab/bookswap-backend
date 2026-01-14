@@ -46,15 +46,17 @@ export declare class InAppNotificationFactory extends NotificationFactory {
     createNotification(): Notification;
 }
 export declare class NotificationFactoryProducer {
-    static getFactory(type: 'email' | 'push' | 'inapp' | 'all'): NotificationFactory;
+    static getFactory(type: 'email' | 'push' | 'inapp' | 'all'): NotificationFactory | CompositeNotificationFactory;
     static getFactoryForUser(userPreferences: any): NotificationFactory[];
 }
 export declare class CompositeNotificationFactory {
     private factories;
     constructor(factories: NotificationFactory[]);
     notifyUser(userId: string, message: string, metadata?: NotificationMetadata): Promise<NotificationResult[]>;
+    notifyUsers(userIds: string[], message: string, metadata?: NotificationMetadata): Promise<NotificationResult[]>;
     addFactory(factory: NotificationFactory): void;
     removeFactory(factory: NotificationFactory): void;
+    notifyUserConsolidated(userId: string, message: string, metadata?: NotificationMetadata): Promise<NotificationResult>;
 }
 export declare class NotificationBuilder {
     private userId;
@@ -65,8 +67,14 @@ export declare class NotificationBuilder {
     setUserId(userId: string): this;
     setMessage(message: string): this;
     setMetadata(metadata: NotificationMetadata): this;
-    setTypes(types: ('email' | 'push' | 'inapp')[]): this;
+    setTypes(types: ('email' | 'push' | 'inapp' | 'all')[]): this;
     setPriority(priority: 'low' | 'medium' | 'high'): this;
     buildAndSend(): Promise<NotificationResult[]>;
+    buildAndSendConsolidated(): Promise<NotificationResult>;
+    buildAndSendAll(): Promise<NotificationResult[]>;
+    buildAndSendAllConsolidated(): Promise<NotificationResult>;
+    sendForType(type: 'email' | 'push' | 'inapp'): Promise<NotificationResult>;
+    sendAll(): Promise<NotificationResult[]>;
+    sendAllConsolidated(): Promise<NotificationResult>;
 }
 //# sourceMappingURL=NotificationFactory.d.ts.map
