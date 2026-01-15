@@ -4,103 +4,102 @@ import { UserRepository } from '../repositories/UserRepository';
 import { NotificationBuilder } from '../factories/NotificationFactory';
 import { AuthUtils } from '../utils/Auth';
 import { Usuario } from '../models';
-import { authenticate } from '../middlewares/auth';
-
 
 const router = Router();
 const repository = new UserRepository();
 
-
-router.get('/', authenticate, async (req, res) => {
-  const usuarios = await repository.findAll();
-  res.json(usuarios);
+router.get('/', async (req, res) => {
+  try {
+    const usuarios = await repository.findAll();
+    res.json({ success: true, data: usuarios });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Erro ao listar usuários' });
+  }
 });
 
-router.get('/:id', authenticate, async (req, res) => {
-  const usuario = await repository.findById(req.params.id);
+router.get('/:id', async (req, res) => {
+  try {
+    const usuario = await repository.findById(req.params.id);
 
-  if (!usuario) {
-    return res.status(404).json({ error: 'Usuário não encontrado' });
+    if (!usuario) {
+      return res.status(404).json({ success: false, error: 'Usuário não encontrado' });
+    }
+
+    res.json({ success: true, data: usuario });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Erro ao buscar usuário' });
   }
-
-  res.json(usuario);
 });
 
 router.post('/register', async (req, res) => {
-  const { email, senha, primeiro_nome, sobrenome } = req.body;
+  try {
+    const { email, senha, primeiro_nome, sobrenome } = req.body;
 
-  const exists = await Usuario.findOne({ where: { email } });
-  if (exists) {
-    return res.status(400).json({ error: 'Email já cadastrado' });
+    const exists = await Usuario.findOne({ where: { email } });
+    if (exists) {
+      return res.status(400).json({ success: false, error: 'Email já cadastrado' });
+    }
+
+    const hash = await bcrypt.hash(senha, 10);
+    const novo = await repository.create({
+      email,
+      hash_senha: hash,
+      primeiro_nome,
+      sobrenome,
+    } as any);
+
+    await new NotificationBuilder()
+      .setUserId(novo.id)
+      .setMessage('Seja bem-vindo ao BookSwap Academy!')
+      .setTypes(['email', 'inapp'])
+      .buildAndSend();
+
+    res.status(201).json({ success: true, data: novo });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Erro ao registrar usuário' });
   }
-
-  const hash = await AuthUtils.hashPassword(senha);
-
-  const usuario = await Usuario.create({
-    email,
-    primeiro_nome,
-    sobrenome,
-    hash_senha: hash
-  });
-
-  const token = AuthUtils.generateToken(usuario.id, usuario.email);
-
-  res.status(201).json({ token });
 });
 
-router.post('/login', async (req, res) => {
-  const { email, senha } = req.body;
+router.put('/:id', async (req, res) => {
+  try {
+    const usuario = await repository.update(req.params.id, req.body);
 
-  const usuario = await Usuario.findOne({ where: { email } });
-  if (!usuario) {
-    return res.status(401).json({ error: 'Credenciais inválidas' });
+    if (!usuario) {
+      return res.status(404).json({ success: false, error: 'Usuário não encontrado' });
+    }
+
+    await new NotificationBuilder()
+      .setUserId(usuario.id)
+      .setMessage('Seu perfil foi atualizado com sucesso.')
+      .setTypes(['inapp'])
+      .buildAndSend();
+
+    res.json({ success: true, data: usuario });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Erro ao atualizar usuário' });
   }
-
-  const senhaValida = await AuthUtils.comparePassword(
-    senha,
-    usuario.hash_senha
-  );
-
-  if (!senhaValida) {
-    return res.status(401).json({ error: 'Credenciais inválidas' });
-  }
-
-  const token = AuthUtils.generateToken(usuario.id, usuario.email);
-
-  res.json({ token });
 });
 
-router.put('/:id', authenticate, async (req, res) => {
-  const usuario = await repository.update(req.params.id, req.body);
 
-  if (!usuario) {
-    return res.status(404).json({ error: 'Usuário não encontrado' });
+router.delete('/:id', async (req, res) => {
+  try {
+    const deleted = await repository.delete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: 'Usuário não encontrado' });
+    }
+
+    await new NotificationBuilder()
+      .setUserId(req.params.id)
+      .setMessage('Sua conta foi removida do BookSwap Academy.')
+      .setTypes(['email'])
+      .setPriority('high')
+      .buildAndSend();
+
+    res.json({ success: true, data: { message: 'Usuário removido com sucesso' } });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Erro ao remover usuário' });
   }
-
-  await new NotificationBuilder()
-    .setUserId(usuario.id)
-    .setMessage('Seu perfil foi atualizado com sucesso.')
-    .setTypes(['inapp'])
-    .buildAndSend();
-
-  res.json(usuario);
-});
-
-router.delete('/:id', authenticate, async (req, res) => {
-  const deleted = await repository.delete(req.params.id);
-
-  if (!deleted) {
-    return res.status(404).json({ error: 'Usuário não encontrado' });
-  }
-
-  await new NotificationBuilder()
-    .setUserId(req.params.id)
-    .setMessage('Sua conta foi removida do BookSwap Academy.')
-    .setTypes(['email'])
-    .setPriority('high')
-    .buildAndSend();
-
-  res.json({ message: 'Usuário removido com sucesso' });
 });
 
 export default router;

@@ -19,57 +19,40 @@ const repository: IBookRepository = new CachedBookRepository(
 );
 
 router.get("/", async (req, res) => {
-  const livros = await repository.findAll();
-  res.json(livros);
+  try {
+    const livros = await repository.findAll();
+    res.json({ success: true, data: livros });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Erro no servidor' });
+  }
 });
-
 
 router.get("/:id", async (req, res) => {
-  const livro = await repository.findById(req.params.id);
+  try {
+    const livro = await repository.findById(req.params.id);
 
-  if (!livro) {
-    return res.status(404).json({ error: "Livro não encontrado" });
+    if (!livro) {
+      return res.status(404).json({ success: false, error: "Livro não encontrado" });
+    }
+
+    res.json({ success: true, data: livro });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Erro no servidor' });
   }
-
-  res.json(livro);
 });
-
 
 router.post("/", async (req, res) => {
-  const { title, author, preco, tipo } = req.body;
+  try {
+    const { preco, tipo, listingType } = req.body;
+    const type = tipo || listingType || 'venda';
 
-  let strategy;
-  switch (tipo) {
-    case "trade":
-      strategy = new TradePricingStrategy();
-      break;
-    case "donation":
-      strategy = new DonationPricingStrategy();
-      break;
-    default:
-      strategy = new SalePricingStrategy();
-  }
-
-  const context = new PricingContext(strategy);
-  const precoFinal = context.executeCalculation(preco);
-
-  const livro = await repository.create({
-    ...req.body,
-    preco: precoFinal,
-  });
-
-  res.status(201).json(livro);
-});
-
-router.put("/:id", async (req, res) => {
-  const { preco, tipo } = req.body;
-
-  if (preco !== undefined && tipo) {
     let strategy;
-    switch (tipo) {
+    switch (String(type).toLowerCase()) {
+      case "troca":
       case "trade":
         strategy = new TradePricingStrategy();
         break;
+      case "doacao":
       case "donation":
         strategy = new DonationPricingStrategy();
         break;
@@ -78,28 +61,67 @@ router.put("/:id", async (req, res) => {
     }
 
     const context = new PricingContext(strategy);
-    req.body.preco = context.executeCalculation(preco);
+    const precoFinal = context.executeCalculation(preco);
+
+    const livro = await repository.create({
+      ...req.body,
+      preco: precoFinal,
+    });
+
+    res.status(201).json({ success: true, data: livro });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Erro ao criar livro' });
   }
-
-  const livro = await repository.update(req.params.id, req.body);
-
-  if (!livro) {
-    return res.status(404).json({ error: "Livro não encontrado" });
-  }
-
-  res.json(livro);
 });
 
+router.put("/:id", async (req, res) => {
+  try {
+    const { preco, tipo, listingType } = req.body;
+    const type = tipo || listingType;
+
+    if (preco !== undefined && type) {
+      let strategy;
+      switch (String(type).toLowerCase()) {
+        case "troca":
+        case "trade":
+          strategy = new TradePricingStrategy();
+          break;
+        case "doacao":
+        case "donation":
+          strategy = new DonationPricingStrategy();
+          break;
+        default:
+          strategy = new SalePricingStrategy();
+      }
+
+      const context = new PricingContext(strategy);
+      req.body.preco = context.executeCalculation(preco);
+    }
+
+    const livro = await repository.update(req.params.id, req.body);
+
+    if (!livro) {
+      return res.status(404).json({ success: false, error: 'Livro não encontrado' });
+    }
+
+    res.json({ success: true, data: livro });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Erro ao atualizar livro' });
+  }
+});
 
 router.delete("/:id", async (req, res) => {
-  const deleted = await repository.delete(req.params.id);
+  try {
+    const deleted = await repository.delete(req.params.id);
 
-  if (!deleted) {
-    return res.status(404).json({ error: "Livro não encontrado" });
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: "Livro não encontrado" });
+    }
+
+    res.json({ success: true, data: { message: "Livro removido com sucesso" } });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Erro ao remover livro' });
   }
-
-  res.json({ message: "Livro removido com sucesso" });
 });
-
 
 export default router;
