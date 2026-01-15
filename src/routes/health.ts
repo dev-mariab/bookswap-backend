@@ -4,7 +4,7 @@ const { sequelize } = db;
 
 const router = Router();
 
-router.get('/health', async (req, res) => {
+router.get('/', async (req, res) => {
   const healthCheck: any = {
     status: 'healthy',
     timestamp: new Date().toISOString(),
@@ -19,7 +19,7 @@ router.get('/health', async (req, res) => {
     await sequelize.authenticate();
     healthCheck.checks.database = 'healthy';
     
-    const [usersResult]: any = await sequelize.query('SELECT COUNT(*) FROM "Usuarios"');
+    const [usersResult]: any = await sequelize.query('SELECT COUNT(*) FROM "usuarios"');
     const [booksResult]: any = await sequelize.query('SELECT COUNT(*) FROM "Books"');
     
     healthCheck.databaseDetails = {

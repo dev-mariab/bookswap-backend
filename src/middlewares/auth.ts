@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, Router } from 'express';
 import { AuthUtils } from '../utils/Auth';
 import { Usuario } from '../models/Usuario';
 
@@ -6,6 +6,70 @@ export interface AuthRequest extends Request {
   user?: any;
   userId?: string;
 }
+
+const router = Router();
+
+router.post('/register', async (req, res) => {
+  const { email, senha, primeiro_nome, sobrenome } = req.body;
+
+  const existe = await Usuario.findOne({ where: { email } });
+  if (existe) {
+    return res.status(400).json({ error: 'Email já cadastrado' });
+  }
+
+  const hash = await AuthUtils.hashPassword(senha);
+
+  const usuario = await Usuario.create({
+    email,
+    primeiro_nome,
+    sobrenome,
+    hash_senha: hash
+  });
+
+  const token = AuthUtils.generateToken(usuario.id, usuario.email);
+
+  res.status(201).json({
+    token,
+    usuario: {
+      id: usuario.id,
+      email: usuario.email,
+      primeiro_nome: usuario.primeiro_nome,
+      sobrenome: usuario.sobrenome
+    }
+  });
+});
+
+
+router.post('/login', async (req, res) => {
+  const { email, senha } = req.body;
+
+  const usuario = await Usuario.findOne({ where: { email } });
+  if (!usuario) {
+    return res.status(401).json({ error: 'Credenciais inválidas' });
+  }
+
+  const senhaValida = await AuthUtils.comparePassword(
+    senha,
+    usuario.hash_senha
+  );
+
+  if (!senhaValida) {
+    return res.status(401).json({ error: 'Credenciais inválidas' });
+  }
+
+  const token = AuthUtils.generateToken(usuario.id, usuario.email);
+
+  res.json({
+    token,
+    usuario: {
+      id: usuario.id,
+      email: usuario.email,
+      primeiro_nome: usuario.primeiro_nome,
+      sobrenome: usuario.sobrenome
+    }
+  });
+});
+
 
 export const authenticate = async (
   req: AuthRequest,
